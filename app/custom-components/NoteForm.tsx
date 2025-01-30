@@ -1,26 +1,31 @@
 "use client"
 
 import { Input } from '@/components/ui/input'
-import React, { useState } from 'react'
+import React, { FormEvent, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import DiscardChangesDialog from './DiscardChangesDialog'
+import { NoteData, Tag } from '../page'
 
 // Dynamically import CreatableSelect with SSR disabled
 const CreatableSelect = dynamic(() => import('react-select/creatable'), {
   ssr: false,
 })
 
-const NoteForm = () => {
+type NoteFormProps = {
+  onSubmit: (data: NoteData) => void
+}
+
+const NoteForm = ({onSubmit} : NoteFormProps) => {
   const router = useRouter()
   const [title, setTitle] = useState('')
-  const [tags, setTags] = useState([])
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [body, setBody] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Check if the form has changes
-  const hasChanges = title || tags.length > 0 || body
+  const hasChanges = title || selectedTags.length > 0 || body
 
   // Handle cancel button click
   const handleCancel = () => {
@@ -35,7 +40,7 @@ const NoteForm = () => {
   const handleDiscardChanges = () => {
     setIsModalOpen(false)
     setTitle('')
-    setTags([])
+    setSelectedTags([])
     setBody('')
   }
 
@@ -44,8 +49,20 @@ const NoteForm = () => {
     setIsModalOpen(false)
   }
 
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    const submittedData = {
+      title,
+      markdown: body,
+      tags: selectedTags
+    }
+    console.log(submittedData);
+    onSubmit(submittedData)
+    
+  }
+
   return (
-    <form className='flex flex-col space-y-6 w-full max-w-2xl'>
+    <form onSubmit={handleSubmit} className='flex flex-col space-y-6 w-full max-w-2xl'>
       {/* Title and Tags Section */}
       <div className='flex flex-row space-x-4 w-full'>
         <Input
@@ -59,8 +76,20 @@ const NoteForm = () => {
             className='w-full'
             placeholder='Select tags'
             isMulti
-            // value={tags}
-            // onChange={(selected) => setTags(selected)}
+            value={selectedTags.map((tag) => {
+              return {
+                label: tag.label,
+                value: tag.id
+              }
+            })}
+            onChange={(tags: any) => {
+              setSelectedTags(tags.map((tag: {label: string,value: string}) => {
+                return {
+                  label: tag.label,
+                  id: tag.value
+                }
+              }))
+            }}
           />
         </div>
       </div>
