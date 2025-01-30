@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import './globals.css'
+import { NoteProvider } from "./context/NoteContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +29,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} my-4 mx-4`}
         suppressHydrationWarning
       >
-        {children}
+        <NoteProvider>
+          {children}
+        </NoteProvider>
       </body>
     </html>
   );

@@ -1,5 +1,5 @@
 import NoteForm from '../custom-components/NoteForm'
-import { NoteData } from '../page'
+import { NoteData } from '../types/types'
 
 type NewNoteProps = {
   onSubmit: (data: NoteData) => void

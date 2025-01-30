@@ -1,37 +1,18 @@
 "use client"
 
-import { useLocalStorage } from "./useLocalStorage"
+import { useNoteContext } from "./context/NoteContext"
+// import { NoteList } from "../custom-components/NoteList"
 
-type RawNote = {
-  id: string
-} & RawNoteData
-
-type RawNoteData = {
-  title: string
-  markdown: string
-  tagIds: string[]
-}
-
-export type Note = {
-  id: string
-} & NoteData
-
-export type NoteData = {
-  title: string
-  markdown: string
-  tags: Tag[]
-}
-
-export type Tag = {
-  id : string
-  label: string
-}
 export default function Home() {
-  const [notes,setNotes] = useLocalStorage<RawNote[]>("NOTES",[])
-  const [tags,setTags] = useLocalStorage<Tag[]>("TAGS",[])
+  const { notes, tags, updateTag, deleteTag } = useNoteContext()
+
   return (
-    <div>
-      Home
-    </div>
-  );
+    <h2>Note List</h2>
+    // <NoteList
+    //   notes={notes}
+    //   availableTags={tags}
+    //   onUpdateTag={updateTag}
+    //   onDeleteTag={deleteTag}
+    // />
+  )
 }

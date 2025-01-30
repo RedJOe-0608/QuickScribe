@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import DiscardChangesDialog from './DiscardChangesDialog'
-import { NoteData, Tag } from '../page'
+import { NoteData, Tag } from '../types/types'
 
 // Dynamically import CreatableSelect with SSR disabled
 const CreatableSelect = dynamic(() => import('react-select/creatable'), {
