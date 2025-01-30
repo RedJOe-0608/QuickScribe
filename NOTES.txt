@@ -1,0 +1,37 @@
+1) first, I faced an issue with useMemo and useEffect.
+- like i thought you could use useEffect in place of useMemo. But no. useEffect is for running side effects. It runs after the render. But useMemo runs within the render. Also, with useMemo, you dont have to maintain an additional state:
+
+with useEffect:
+
+const [notesWithTags, setNotesWithTags] = useState<Note[]>([]);
+
+useEffect(() => {
+  const transformedNotes = notes.map(note => {
+    return { ...note, tags: tags.filter(tag => note.tagIds.includes(tag.id)) }
+  });
+  setNotesWithTags(transformedNotes);
+}, [notes, tags]);
+
+useEffect runs after the render, so the component would first render with the old notesWithTags, then trigger a re-render with the updated value.
+
+This leads to two renders instead of one, which is inefficient.
+
+Complexity:
+
+You now have an additional state (notesWithTags) to manage, which increases complexity.
+
+With useMemo, the derived value is computed directly during render, avoiding the need for extra state.
+
+
+with useMemo:
+
+const notesWithTags = useMemo(() => {
+  return notes.map(note => {
+    return { ...note, tags: tags.filter(tag => note.tagIds.includes(tag.id)) }
+  })
+}, [notes, tags])
+
+ The transformed notesWithTags is available immediately during rendering.
+
+
+2) useLocalStorage hook with typescript. Also, the way we are storing notes in localStorage. Each note, instead of storing the actual tag, stores an array of tagIds. 
