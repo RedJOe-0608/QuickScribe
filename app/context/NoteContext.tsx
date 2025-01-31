@@ -23,7 +23,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
   const [tags, setTags] = useLocalStorage<Tag[]>("TAGS", [])
 
   const notesWithTags = useMemo(() => {
-    return notes.map((note:any) => {
+    return notes?.map((note:any) => {
       return { ...note, tags: tags.filter((tag:any) => note.tagIds.includes(tag.id)) }
     })
   }, [notes, tags])

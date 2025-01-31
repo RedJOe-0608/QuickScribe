@@ -14,20 +14,22 @@ interface DiscardChangesDialogProps {
   isOpen: boolean
   onClose: () => void
   onDiscard: () => void
+  type?: string
 }
 
 const DiscardChangesDialog = ({
   isOpen,
   onClose,
   onDiscard,
+  type
 }: DiscardChangesDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Discard Changes?</DialogTitle>
+          <DialogTitle> {type ? 'Delete note?' : 'Discard Changes?'} </DialogTitle>
           <DialogDescription>
-            You have unsaved changes. Are you sure you want to discard them?
+            {type ? 'Yo are you sure you want to delete this note?' : 'You have unsaved changes. Are you sure you want to discard them?'}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -36,14 +38,14 @@ const DiscardChangesDialog = ({
             variant='outline'
             onClick={onClose}
           >
-            Keep Editing
+            {type ? 'Cancel' : 'Keep Editing'}
           </Button>
           <Button
             type='button'
             variant='destructive'
             onClick={onDiscard}
           >
-            Discard Changes
+            {type ? 'Delete' : 'Discard Changes'}
           </Button>
         </DialogFooter>
       </DialogContent>

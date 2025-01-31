@@ -1,109 +1,159 @@
 "use client"
 
 import { Input } from '@/components/ui/input'
-import React, { FormEvent, useState } from 'react'
+import React, { FormEvent, useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import DiscardChangesDialog from './DiscardChangesDialog'
 import { NoteData, Tag } from '../types/types'
+import { v4 as uuidV4 } from "uuid"
+import { useNoteContext } from '../context/NoteContext'
+import { useToast } from '@/hooks/use-toast'
 
-// Dynamically import CreatableSelect with SSR disabled
 const CreatableSelect = dynamic(() => import('react-select/creatable'), {
   ssr: false,
 })
 
 type NoteFormProps = {
-  onSubmit: (data: NoteData) => void
-}
+  onSubmit?: (data: NoteData) => void
+  onUpdate?: (id:string,data: NoteData) => void
+  type: string
+} & Partial<NoteData>
 
-const NoteForm = ({onSubmit} : NoteFormProps) => {
+const NoteForm = ({ onSubmit,onUpdate,title = '', markdown = '', tags = [],type }: NoteFormProps) => {
+  console.log("rerendering...");
+  
   const router = useRouter()
-  const [title, setTitle] = useState('')
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
-  const [body, setBody] = useState('')
+  const {id} = useParams()
+  console.log("Whats the id:",id);
+  
+  const { addTag, tags: availableTags } = useNoteContext()
+  const {toast} = useToast()
+  
+  // Refs for input fields
+  const titleRef = useRef<HTMLInputElement>(null)
+  const bodyRef = useRef<HTMLTextAreaElement>(null)
+  
+  // State only for tags since they need special handling
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(tags)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // Check if the form has changes
-  const hasChanges = title || selectedTags.length > 0 || body
+  // Check if form has changes using refs
+  const checkForChanges = () => {
+    return !!(
+      (titleRef.current?.value || '').trim() || 
+      (bodyRef.current?.value || '').trim() || 
+      selectedTags.length > 0
+    )
+  }
+  
+  const clearForm = () => {
+    if (titleRef.current) titleRef.current.value = ''
+    if (bodyRef.current) bodyRef.current.value = ''
+    setSelectedTags([])
+  }
 
-  // Handle cancel button click
   const handleCancel = () => {
-    if (hasChanges) {
-      setIsModalOpen(true) // Show modal if there are changes
+    if (type !== 'edit' && checkForChanges()) {
+      setIsModalOpen(true)
     } else {
-      router.back() // Navigate back if the form is empty
+      router.back()
     }
   }
 
-  // Handle modal confirmation (discard changes)
   const handleDiscardChanges = () => {
+    clearForm()
     setIsModalOpen(false)
-    setTitle('')
-    setSelectedTags([])
-    setBody('')
+    // router.back()
   }
 
-  // Handle modal cancellation (keep changes)
   const handleKeepEditing = () => {
     setIsModalOpen(false)
   }
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    const submittedData = {
-      title,
-      markdown: body,
-      tags: selectedTags
+
+    if(onSubmit)
+    {
+      onSubmit({
+        title: titleRef.current?.value || '',
+        markdown: bodyRef.current?.value || '',
+        tags: selectedTags
+      })
     }
-    console.log(submittedData);
-    onSubmit(submittedData)
-    
+    else if(onUpdate){
+      onUpdate(id as string,{
+        title: titleRef.current?.value || '',
+        markdown: bodyRef.current?.value || '',
+        tags: selectedTags
+      })
+    }
+
+    toast({
+      title: type === 'create' ? "Note created successfully!" : "Note Edited successfully!",
+      variant: "success"
+    })
+    clearForm()
   }
+
+   const handleTagsChange = useCallback((tags: any) => {
+    const newTags = tags.map((tag: {label: string, value: string}) => ({
+      label: tag.label,
+      id: tag.value
+    }))
+    setSelectedTags(newTags)
+  }, [])
+
+  const tagOptions = useMemo(() => {
+    return availableTags?.map((tag) => ({
+      label: tag.label,
+      value: tag.id,
+    }))
+  }, [availableTags])
+
+  const selectedTagValues = useMemo(() => {
+    return selectedTags.map((tag) => ({
+      label: tag.label,
+      value: tag.id,
+    }))
+  }, [selectedTags])
 
   return (
     <form onSubmit={handleSubmit} className='flex flex-col space-y-6 w-full max-w-2xl'>
-      {/* Title and Tags Section */}
       <div className='flex flex-row space-x-4 w-full'>
         <Input
           className='w-1/2'
           placeholder='Enter note title'
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          ref={titleRef}
+          defaultValue={title}
         />
         <div className='w-1/2'>
           <CreatableSelect
             className='w-full'
             placeholder='Select tags'
             isMulti
-            value={selectedTags.map((tag) => {
-              return {
-                label: tag.label,
-                value: tag.id
-              }
-            })}
-            onChange={(tags: any) => {
-              setSelectedTags(tags.map((tag: {label: string,value: string}) => {
-                return {
-                  label: tag.label,
-                  id: tag.value
-                }
-              }))
+            onCreateOption={(label) => {
+              const newTag = { id: uuidV4(), label }
+              addTag(newTag)
+              setSelectedTags(prev => [...prev, newTag])
             }}
+            value={selectedTagValues}
+            options={tagOptions}
+            onChange={handleTagsChange}
           />
         </div>
       </div>
 
-      {/* Body Section */}
       <textarea
         rows={10}
         className='w-full p-4 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500'
         placeholder='Write your note here...'
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
+        ref={bodyRef}
+        defaultValue={markdown}
       />
 
-      {/* Buttons Section */}
       <div className='flex justify-end space-x-4'>
         <Button
           type='button'
@@ -117,12 +167,12 @@ const NoteForm = ({onSubmit} : NoteFormProps) => {
           type='submit'
           variant='create'
           size='default'
+          onClick={() => router.back()}
         >
-          Save
+          {type === 'create' ? 'Save' : 'Edit'}
         </Button>
       </div>
 
-      {/* Discard Changes Dialog */}
       <DiscardChangesDialog
         isOpen={isModalOpen}
         onClose={handleKeepEditing}

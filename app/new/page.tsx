@@ -1,15 +1,16 @@
-import NoteForm from '../custom-components/NoteForm'
-import { NoteData } from '../types/types'
+"use client"
 
-type NewNoteProps = {
-  onSubmit: (data: NoteData) => void
-}
-const Page = ({onSubmit} : NewNoteProps) => {
+import { useNoteContext } from '../context/NoteContext'
+import NoteForm from '../custom-components/NoteForm'
+
+const Page = () => {
+  const {onCreateNote} = useNoteContext()
   return (
     <div className='container mx-auto px-4 py-8'>
       <h1 className='text-3xl font-bold mb-8'>New Note</h1>
       <NoteForm
-       onSubmit={onSubmit}
+       onSubmit={onCreateNote}
+       type='create'
       />
     </div>
   )
