@@ -21,7 +21,7 @@ const NoteList = ({ notes, availableTags, onUpdateTag, onDeleteTag }: NoteListPr
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const filteredNotes = useMemo(() => {
-    return notes.filter(note => {
+    return notes?.filter(note => {
       return (
         (title === "" || note.title.toLowerCase().includes(title.toLowerCase())) &&
         (selectedTags.length === 0 || selectedTags.every(tag => note.tags.some(noteTag => noteTag.id === tag.id)))
@@ -45,7 +45,7 @@ const NoteList = ({ notes, availableTags, onUpdateTag, onDeleteTag }: NoteListPr
   }, [availableTags])
 
   const selectedTagValues = useMemo(() => {
-    return selectedTags.map((tag) => ({
+    return selectedTags?.map((tag) => ({
       label: tag.label,
       value: tag.id,
     }))
